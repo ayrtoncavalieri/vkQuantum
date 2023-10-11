@@ -1,0 +1,50 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1 ) in;
+
+layout (push_constant) uniform constants{
+  int operation;
+  int width;
+  int height;
+}PushConstants;
+
+layout(std430, binding = 0) buffer bufA{
+  float A[];
+};
+
+layout(std430, binding = 1) buffer bufB{
+  float B[];
+};
+
+layout(std430, binding = 2) buffer bufC{
+  float C[];
+};
+
+void main() {
+  uint x = gl_GlobalInvocationID.x;
+  uint y = gl_GlobalInvocationID.y;
+  if(x >= PushConstants.height || y >= PushConstants.width)
+    return;
+
+  uint index = PushConstants.width*x + y;
+
+  if(PushConstants.operation == 0){
+    C[index] = A[index] + B[index];
+  }else{
+    float sum = 0.0;
+    for(uint i = 0; i < PushConstants.width; i++){
+      sum += A[x*PushConstants.width + i] * B[PushConstants.width*i + y];
+    }
+    C[index] = sum;
+  }  
+}
+
+/*
+ int sum = 0;
+    for(uint i = 0; i < 1024; i++) {
+        sum += matrix_a[row * 1024 + i] * matrix_b[i * 1024 + col];
+    }
+
+    matrix_c[row * 1024 + col] = sum;
+*/

@@ -1,0 +1,1 @@
+Deletar o arquivo vkQuantum.cpp e renomear o arquivo vkQuantum.cpp.renomear para vkQUantum.cpp antes de abrir o projeto.

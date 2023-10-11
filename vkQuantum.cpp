@@ -399,7 +399,7 @@ void runCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, VkQueue qu
 
     //VK_CHECK_RESULT(vkWaitForFences(device, 1, &fence, VK_TRUE, 100000000000));
     if (vkWaitForFences(device, 1, &fence, VK_TRUE, 100000000000) == VK_ERROR_DEVICE_LOST) {
-        std::cout << "Device lost!\n";
+        std::cout << "DEVICE LOST\n";
     }
 
     vkDestroyFence(device, fence, NULL);

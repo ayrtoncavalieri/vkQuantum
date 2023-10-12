@@ -33,15 +33,14 @@ VkInstance createInstance(const std::vector<const char*>& enabledLayers, const s
     applicationInfo.engineVersion = 0;
     applicationInfo.apiVersion = VK_API_VERSION_1_0;
 
-    const std::vector<const char*> Layers = { "VK_LAYER_KHRONOS_validation" };
     VkInstanceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.flags = 0;
     createInfo.pApplicationInfo = &applicationInfo;
 
     // Give our desired layers and extensions to vulkan.
-    createInfo.enabledLayerCount = (uint32_t)Layers.size();//(uint32_t)enabledLayers.size();
-    createInfo.ppEnabledLayerNames = Layers.data();//enabledLayers.data();
+    createInfo.enabledLayerCount = (uint32_t)enabledLayers.size();
+    createInfo.ppEnabledLayerNames = enabledLayers.data();
     createInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
     createInfo.ppEnabledExtensionNames = enabledExtensions.data();
 
@@ -400,6 +399,7 @@ void runCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, VkQueue qu
     //VK_CHECK_RESULT(vkWaitForFences(device, 1, &fence, VK_TRUE, 100000000000));
     if (vkWaitForFences(device, 1, &fence, VK_TRUE, 100000000000) == VK_ERROR_DEVICE_LOST) {
         std::cout << "DEVICE LOST\n";
+        
     }
 
     vkDestroyFence(device, fence, NULL);
@@ -588,7 +588,7 @@ struct ComputeShader {
 #define HEIGHT 4098
 
 int main() {
-    std::vector<const char*> enabledLayers;
+    std::vector<const char*> enabledLayers = {"VK_LAYER_KHRONOS_validation"};
     std::vector<const char*> enabledExtensions;
     DeviceInfo device_info{ enabledLayers, enabledExtensions };
 

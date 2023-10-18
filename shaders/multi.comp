@@ -5,12 +5,14 @@ layout (local_size_x = 32, local_size_y = 32, local_size_z = 1 ) in;
 
 layout (push_constant) uniform constants{
   int operation;
-  int width;
-  int height;
+  int linesA;
+  int columnsA;
+  int linesB;
+  int columnsB;
 }PushConstants;
 
 layout(std430, binding = 0) buffer bufA{
-  float A[];
+  float A[]; //Para complexo, usar vetor de vec2
 };
 
 layout(std430, binding = 1) buffer bufB{
@@ -22,19 +24,21 @@ layout(std430, binding = 2) buffer bufC{
 };
 
 void main() {
-  uint x = gl_GlobalInvocationID.x;
-  uint y = gl_GlobalInvocationID.y;
-  if(x >= PushConstants.height || y >= PushConstants.width)
-    return;
-
-  uint index = PushConstants.width*x + y;
+  uint i = gl_GlobalInvocationID.x;
+  uint j = gl_GlobalInvocationID.y;
 
   if(PushConstants.operation == 0){
-    C[index] = A[index] + B[index];
+    
   }else{
+    uint resLines, resColumns;
+    resLines = PushConstants.linesA;
+    resColumns = PushConstants.columnsB;
+    if(i >= resLines || j >= resColumns)
+      return;
+    uint index = resColumns*i + j; //Tamanho das colunas*i + j
     float sum = 0.0;
-    for(uint i = 0; i < PushConstants.width; i++){
-      sum += A[x*PushConstants.width + i] * B[PushConstants.width*i + y];
+    for(uint k = 0; k < PushConstants.columnsA; k++){
+      sum += A[i*PushConstants.columnsA + k] * B[PushConstants.columnsB*k + j];
     }
     C[index] = sum;
   }  

@@ -455,11 +455,17 @@ struct Buffer {
     }
 };
 
+struct vec2 {
+    float x, y;
+};
+
+// Implementar a leitura de 1 qubit
+
 struct Buffer2D : Buffer {
     uint32_t width, height;
 
     Buffer2D(DeviceInfo device_info, uint32_t w, uint32_t h) :
-        Buffer{ device_info, (uint32_t)sizeof(float) * w * h },
+        Buffer{ device_info, (uint32_t)sizeof(float) * w * h }, //2*sizeof(float) para complexo
         width{ w }, height{ h } {}
 
     void print(const char* label) {
@@ -512,9 +518,11 @@ struct ComputeShader {
 
     struct PushConstants {
         int operation;
-        int width;
-        int height;
-    }constants = { 0, 0, 0 };
+        int linesA;
+        int columnsA;
+        int linesB;
+        int columnsB;
+    }constants = { 0, 0, 0, 0, 0 };
 
     ComputeShader(DeviceInfo device_info) {
         device = device_info.device;
@@ -574,7 +582,7 @@ struct ComputeShader {
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstants), &constants);
         uint32_t sx = (uint32_t)ceil(nx / float(WorkgroupSize.X));
         uint32_t sy = (uint32_t)ceil(ny / float(WorkgroupSize.Y));
-        uint32_t sz = (uint32_t)ceil(nz / float(WorkgroupSize.Z));
+        uint32_t sz = (uint32_t)ceil(nz / float(WorkgroupSize.Z)); //Alterar a quantidade de workgroups 
         std::cout << "Invocations: " << sx << " " << sy << " " << sz << std::endl;
         vkCmdDispatch(commandBuffer, sx, sy, sz);
 
@@ -584,8 +592,12 @@ struct ComputeShader {
     }
 };
 
-#define WIDTH 4098
-#define HEIGHT 4098
+#define WIDTH 5
+#define HEIGHT 8
+#define WIDTH_B 7
+#define HEIGHT_B 5
+#define WIDTH_C WIDTH_B
+#define HEIGHT_C HEIGHT
 
 int main() {
     std::vector<const char*> enabledLayers = {"VK_LAYER_KHRONOS_validation"};
@@ -595,29 +607,36 @@ int main() {
     ComputeShader shader{ device_info };
 
     Buffer2D bufA{ device_info, WIDTH, HEIGHT };
-    Buffer2D bufB{ device_info, WIDTH, HEIGHT };
-    Buffer2D bufC{ device_info, WIDTH, HEIGHT };
+    Buffer2D bufB{ device_info, WIDTH_B, HEIGHT_B };
+    Buffer2D bufC{ device_info, WIDTH_C, HEIGHT_C };
 
     bufA.init(fA);
     bufB.init(fB);
 
-    //bufA.print("A");
-    //bufB.print("B");
+    bufA.print("A");
+    bufB.print("B");
 
     shader.connect(bufA, 0); // connect buffer A to binding 0
     shader.connect(bufB, 1); // connect buffer B to binding 1
     shader.connect(bufC, 2); // connect buffer C to binding 2
 
-    shader.constants.width = WIDTH;
-    shader.constants.height = HEIGHT;
-    shader.constants.operation = 0; // sum
+    shader.constants.columnsA= WIDTH;
+    shader.constants.linesA = HEIGHT; //Modificar parâmetros
+    shader.constants.columnsB = WIDTH_B;
+    shader.constants.linesB = HEIGHT_B;
+    shader.constants.operation = 1; // sum
 
     /*shader.run(WIDTH, HEIGHT);
     bufC.print("A + B");*/
 
-    shader.constants.operation = 1; // element-wise product
-    shader.run(WIDTH, HEIGHT);
-    //bufC.print("A * B");
+    //shader.constants.operation = 1; // element-wise product
+    shader.run(WIDTH_C, HEIGHT_C);
+    bufC.print("A * B");
+
+    /*
+        Para o produto de matrizes, o parâmetro do run levará o tamanho da matriz resultante.
+        Para produto de Kronecker, o parâmetro do run levará o tamanhao da matriz A
+    */
 
     bufA.clear();
     bufB.clear();

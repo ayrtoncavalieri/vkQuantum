@@ -474,7 +474,7 @@ struct Buffer2D : Buffer {
         printf("%s =\n", label);
         for (uint32_t y = 0; y < height; y++) {
             for (uint32_t x = 0; x < width; x++, p++)
-                printf("%6.5f ", *p);
+                printf("%f\t", *p);
             puts("");
         }
 
@@ -493,11 +493,13 @@ struct Buffer2D : Buffer {
 };
 
 float fA(int x, int y) {
-    return y + (float)0.01 * x;
+    //return y + (float)0.01 * x;
+    return (float)((x) + (y));
 }
 
 float fB(int x, int y) {
-    return x + (float)0.01 * y;
+    //return x + (float)0.01 * y;
+    return (float)((x) + (y));
 }
 
 struct ComputeShader {
@@ -592,13 +594,24 @@ struct ComputeShader {
     }
 };
 
-#define WIDTH 5
-#define HEIGHT 8
-#define WIDTH_B 7
-#define HEIGHT_B 5
-#define WIDTH_C WIDTH_B
-#define HEIGHT_C HEIGHT
-
+#define MATMUL
+#ifndef MATMUL
+#define COLUMNS 2 //WIDTH -> Columns
+#define LINES 3 //HEIGHT -> Lines
+#define COLUMNS_B 4
+#define LINES_B 5
+#define COLUMNS_C COLUMNS*COLUMNS_B
+#define LINES_C LINES*LINES_B
+#define OPERATION 0
+#else
+#define COLUMNS 4 //COLUMNS -> Columns
+#define LINES 3 //HEIGHT -> Lines
+#define COLUMNS_B 5
+#define LINES_B COLUMNS
+#define COLUMNS_C COLUMNS_B
+#define LINES_C LINES
+#define OPERATION 1
+#endif
 int main() {
     std::vector<const char*> enabledLayers = {"VK_LAYER_KHRONOS_validation"};
     std::vector<const char*> enabledExtensions;
@@ -606,9 +619,9 @@ int main() {
 
     ComputeShader shader{ device_info };
 
-    Buffer2D bufA{ device_info, WIDTH, HEIGHT };
-    Buffer2D bufB{ device_info, WIDTH_B, HEIGHT_B };
-    Buffer2D bufC{ device_info, WIDTH_C, HEIGHT_C };
+    Buffer2D bufA{ device_info, COLUMNS, LINES };
+    Buffer2D bufB{ device_info, COLUMNS_B, LINES_B };
+    Buffer2D bufC{ device_info, COLUMNS_C, LINES_C };
 
     bufA.init(fA);
     bufB.init(fB);
@@ -620,17 +633,17 @@ int main() {
     shader.connect(bufB, 1); // connect buffer B to binding 1
     shader.connect(bufC, 2); // connect buffer C to binding 2
 
-    shader.constants.columnsA= WIDTH;
-    shader.constants.linesA = HEIGHT; //Modificar parâmetros
-    shader.constants.columnsB = WIDTH_B;
-    shader.constants.linesB = HEIGHT_B;
-    shader.constants.operation = 1; // sum
+    shader.constants.columnsA= COLUMNS;
+    shader.constants.linesA = LINES; //Modificar parâmetros
+    shader.constants.columnsB = COLUMNS_B;
+    shader.constants.linesB = LINES_B;
+    shader.constants.operation = OPERATION; // sum
 
-    /*shader.run(WIDTH, HEIGHT);
+    /*shader.run(COLUMNS, LINES);
     bufC.print("A + B");*/
 
     //shader.constants.operation = 1; // element-wise product
-    shader.run(WIDTH_C, HEIGHT_C);
+    shader.run(COLUMNS, LINES);
     bufC.print("A * B");
 
     /*

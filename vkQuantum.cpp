@@ -596,6 +596,7 @@ struct ComputeShader {
 
 #define MATMUL
 #ifndef MATMUL
+//Example of Kronecker Product
 #define COLUMNS 2 //WIDTH -> Columns
 #define LINES 3 //HEIGHT -> Lines
 #define COLUMNS_B 4
@@ -604,6 +605,7 @@ struct ComputeShader {
 #define LINES_C LINES*LINES_B
 #define OPERATION 0
 #else
+//Example of Matrix Multiplication
 #define COLUMNS 4 //COLUMNS -> Columns
 #define LINES 3 //HEIGHT -> Lines
 #define COLUMNS_B 5
@@ -634,22 +636,13 @@ int main() {
     shader.connect(bufC, 2); // connect buffer C to binding 2
 
     shader.constants.columnsA= COLUMNS;
-    shader.constants.linesA = LINES; //Modificar parâmetros
+    shader.constants.linesA = LINES; 
     shader.constants.columnsB = COLUMNS_B;
     shader.constants.linesB = LINES_B;
-    shader.constants.operation = OPERATION; // sum
+    shader.constants.operation = OPERATION; 
 
-    /*shader.run(COLUMNS, LINES);
-    bufC.print("A + B");*/
-
-    //shader.constants.operation = 1; // element-wise product
     shader.run(COLUMNS, LINES);
     bufC.print("A * B");
-
-    /*
-        Para o produto de matrizes, o parâmetro do run levará o tamanho da matriz resultante.
-        Para produto de Kronecker, o parâmetro do run levará o tamanhao da matriz A
-    */
 
     bufA.clear();
     bufB.clear();

@@ -26,29 +26,33 @@ layout(std430, binding = 2) buffer bufC{
 void main() {
   uint i = gl_GlobalInvocationID.x;
   uint j = gl_GlobalInvocationID.y;
-
+  uint resLines, resColumns;
+  uint index;
   if(PushConstants.operation == 0){
-    
+    // Kronecker Product
+    resLines = PushConstants.linesA * PushConstants.linesB; // Calculating the size of the result matrix
+    resColumns = PushConstants.columnsA * PushConstants.columnsB;
+    if(i >= PushConstants.linesA || j >= PushConstants.columnsA) // If we are beyond the limits of matrix A, just return
+      return;
+    uint iC, jC, indexA = i*PushConstants.columnsA + j;
+    for(uint iB = 0; iB < PushConstants.linesB; iB++){
+      for(uint jB = 0; jB < PushConstants.columnsB; jB++){ // Running thru B matrix multiplying by A[indexA]
+        iC = i*PushConstants.linesB + iB;
+        jC = j*PushConstants.columnsB + jB;
+        index = resColumns*iC + jC;
+        C[index] = A[indexA] * B[iB*PushConstants.columnsB + jB]; // Inserting results on C
+      }
+    }
   }else{
-    uint resLines, resColumns;
+    // Matrix Multiplication
     resLines = PushConstants.linesA;
     resColumns = PushConstants.columnsB;
     if(i >= resLines || j >= resColumns)
       return;
-    uint index = resColumns*i + j; //Tamanho das colunas*i + j
-    float sum = 0.0;
+    index = resColumns*i + j; //(Columns size)*i + j
+    C[index] = 0.0;
     for(uint k = 0; k < PushConstants.columnsA; k++){
-      sum += A[i*PushConstants.columnsA + k] * B[PushConstants.columnsB*k + j];
+      C[index] += A[i*PushConstants.columnsA + k] * B[PushConstants.columnsB*k + j];
     }
-    C[index] = sum;
   }  
 }
-
-/*
- int sum = 0;
-    for(uint i = 0; i < 1024; i++) {
-        sum += matrix_a[row * 1024 + i] * matrix_b[i * 1024 + col];
-    }
-
-    matrix_c[row * 1024 + col] = sum;
-*/

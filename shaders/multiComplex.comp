@@ -1,0 +1,46 @@
+#version 450
+#pragma shader_stage (compute)
+
+// Define the input and output matrices as buffers
+layout (set = 0, binding = 0) buffer readonly MatrixA {
+    vec2 matrix_a[]; // Change the data type from float to vec2
+};
+layout (set = 0, binding = 1) buffer readonly MatrixB {
+    vec2 matrix_b[]; // Change the data type from float to vec2
+};
+layout (set = 0, binding = 2) buffer writeonly MatrixC {
+    vec2 matrix_c[]; // Change the data type from float to vec2
+};
+
+// Define the configuration parameters as a uniform variable
+layout (set = 0, binding = 3) uniform Config {
+    int rows_a; // Number of rows in matrix A
+    int cols_a; // Number of columns in matrix A
+    int cols_b; // Number of columns in matrix B
+};
+
+// Specify the number of threads per output element
+layout (local_size_x = 8, local_size_y = 4) in;
+
+void main () {
+    // Get the global thread ID
+    uint row = gl_GlobalInvocationID.x; // Row index of the output element
+    uint col = gl_GlobalInvocationID.y; // Column index of the output element
+
+    // Check if the thread is within the output matrix bounds
+    if (row < rows_a && col < cols_b) {
+        // Initialize the output element to zero
+        vec2 sum = vec2(0.0); // Change the data type from float to vec2
+
+        // Loop over the common dimension of matrix A and B
+        for (uint i = 0; i < cols_a; i++) {
+            // Multiply the corresponding elements of matrix A and B and add to the sum
+            vec2 a = matrix_a[row * cols_a + i]; // Get the element from matrix A
+            vec2 b = matrix_b[i * cols_b + col]; // Get the element from matrix B
+            sum += vec2(dot(a, b), cross(a, b).z); // Change the multiplication formula for complex numbers
+        }
+
+        // Write the sum to the output buffer
+        matrix_c[row * cols_b + col] = sum;
+    }
+}

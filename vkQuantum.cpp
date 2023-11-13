@@ -594,7 +594,7 @@ struct ComputeShader {
     }
 };
 
-#define MATMUL
+//#define MATMUL
 #ifndef MATMUL
 //Example of Kronecker Product
 #define COLUMNS 2 //WIDTH -> Columns

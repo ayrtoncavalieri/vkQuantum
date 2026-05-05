@@ -1,6 +1,6 @@
 #version 450
 
-layout (local_size_x = 0, local_size_y = 1, local_size_z = 2) in;
+layout (local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
 
 layout (push_constant) uniform constants{
   int operation;
@@ -22,12 +22,12 @@ layout(std430, binding = 2) buffer bufC{
   vec2 C[];
 };
 
-// This function multiplies complex numbers
+// Multiplication of complex numbers
 vec2 complexMul(vec2 a, vec2 b) {
     return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
 }
 
-// This function sums complex numbers
+// Summation of complex numbers
 vec2 complexAdd(vec2 a, vec2 b) {
     return vec2(a.x + b.x, a.y + b.y);
 }
@@ -37,33 +37,58 @@ void main() {
   uint j = gl_GlobalInvocationID.y;
   uint resLines, resColumns;
   uint index;
-  if(PushConstants.operation == 0){
-    // Kronecker Product
-    resLines = PushConstants.linesA * PushConstants.linesB; // Calculating the size of the result matrix
-    resColumns = PushConstants.columnsA * PushConstants.columnsB;
-    if(i >= PushConstants.linesA || j >= PushConstants.columnsA) // If we are beyond the limits of matrix A, just return
-      return;
-    uint iC, jC, indexA = i*PushConstants.columnsA + j;
-    for(uint iB = 0; iB < PushConstants.linesB; iB++){
-      for(uint jB = 0; jB < PushConstants.columnsB; jB++){ // Running thru B matrix multiplying by A[indexA]
-        iC = i*PushConstants.linesB + iB;
-        jC = j*PushConstants.columnsB + jB;
-        index = resColumns*iC + jC;
-        //C[index] = A[indexA] * B[iB*PushConstants.columnsB + jB]; // Inserting results on C
-        C[index] = complexMul(A[indexA], B[iB*PushConstants.columnsB + jB]);
+  uint iC; 
+  uint jC; 
+  uint indexA;
+  switch(PushConstants.operation){
+    case 0: // Kronecker Product
+      resLines = PushConstants.linesA * PushConstants.linesB; // Calculating the size of the result matrix
+      resColumns = PushConstants.columnsA * PushConstants.columnsB;
+      if(i >= PushConstants.linesA || j >= PushConstants.columnsA) // If we are beyond the limits of matrix A, just return
+        return;
+      indexA = i*PushConstants.columnsA + j;
+      for(uint iB = 0; iB < PushConstants.linesB; iB++){
+        for(uint jB = 0; jB < PushConstants.columnsB; jB++){ // Running thru B matrix multiplying by A[indexA]
+          iC = i*PushConstants.linesB + iB;
+          jC = j*PushConstants.columnsB + jB;
+          index = resColumns*iC + jC;
+          //C[index] = A[indexA] * B[iB*PushConstants.columnsB + jB]; // Inserting results on C
+          C[index] = complexMul(A[indexA], B[iB*PushConstants.columnsB + jB]);
+        }
       }
-    }
-  }else{
-    // Matrix Multiplication
-    resLines = PushConstants.linesA;
-    resColumns = PushConstants.columnsB;
-    if(i >= resLines || j >= resColumns)
-      return;
-    index = resColumns*i + j; //(Columns size)*i + j
-    C[index] = vec2(0.0, 0.0);
-    for(uint k = 0; k < PushConstants.columnsA; k++){
-      //C[index] += A[i*PushConstants.columnsA + k] * B[PushConstants.columnsB*k + j];
-      C[index] = complexAdd(C[index], complexMul(A[i*PushConstants.columnsA + k], B[PushConstants.columnsB*k + j]));
-    }
-  }  
+    break;
+    case 1: // Matrix Multiplication
+      resLines = PushConstants.linesA;
+      resColumns = PushConstants.columnsB;
+      if(i >= resLines || j >= resColumns)
+        return;
+      index = resColumns*i + j; //(Columns size)*i + j
+      C[index] = vec2(0.0, 0.0);
+      for(uint k = 0; k < PushConstants.columnsA; k++){
+        //C[index] += A[i*PushConstants.columnsA + k] * B[PushConstants.columnsB*k + j];
+        C[index] = complexAdd(C[index], complexMul(A[i*PushConstants.columnsA + k], B[PushConstants.columnsB*k + j]));
+      }
+    break;
+    case 2: // Matrix Addition
+      resLines = PushConstants.linesA;
+      resColumns = PushConstants.columnsA;
+      if(i >= resLines || j >= resColumns)
+        return;
+      index = resColumns*i + j; //(Columns size)*i + j
+      //C[index] = A[index] + B[index];
+      C[index] = complexAdd(A[index], B[index]);
+    break;
+    case 3: //Multiply by scalar
+      resLines = PushConstants.linesA;
+      resColumns = PushConstants.columnsA;
+      if(i >= resLines || j >= resColumns)
+        return;
+      index = resColumns*i + j; //(Columns size)*i + j
+      //C[index] = A[index] * B[0]; // Assuming the scalar is in the first position of B
+      C[index] = complexMul(A[index], B[0]);
+    break;
+    default: // Invalid operation, do nothing
+      
+    break;
+  }
 }

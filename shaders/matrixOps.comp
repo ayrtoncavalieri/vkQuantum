@@ -84,8 +84,8 @@ void main() {
       if(i >= resLines || j >= resColumns)
         return;
       index = resColumns*i + j; //(Columns size)*i + j
-      //C[index] = A[index] * B[0]; // Assuming the scalar is in the first position of B
-      C[index] = complexMul(A[index], B[0]);
+      //C[index] = A[0] * B[index]; // Assuming the scalar is in the first position of A
+      C[index] = complexMul(A[0], B[index]);
     break;
     default: // Invalid operation, do nothing
       

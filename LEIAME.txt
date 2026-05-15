@@ -1,1 +1,5 @@
 Deletar o arquivo vkQuantum.cpp e renomear o arquivo vkQuantum.cpp.renomear para vkQUantum.cpp antes de abrir o projeto.
+
+O código em comp.spv foi feito com o seguinte comando:
+glslangValidator.exe -V shader3.comp
+glslc.exe -O .\shader3.comp -o comp.spv
